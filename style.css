@@ -1,0 +1,338 @@
+    @font-face {
+        font-family: 'Misto';
+        src: url(fonts/Misto.ttf);
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    
+    a {
+        all: unset;
+        cursor: pointer;
+        font-family: Montserrat;
+    }
+    
+    p {
+        font-family: Montserrat;
+        line-height: 32px;
+    }
+    
+    .heading {
+        color: #FF6565;
+    }
+    
+    .dop {
+        color: #4770FF;
+        font-weight: bold;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: auto;
+    }
+    
+    .header_navigation {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header_navigation__language a {
+        font-size: 14px;
+    }
+    
+    .header_navigation__language a:nth-child(1) {
+        margin-right: 21px;
+    }
+    
+    .header_navigation_nav a {
+        margin-right: 50px;
+    }
+    
+    .logo {
+        font-family: Island Moments;
+        font-size: 36px;
+        color: #FF6565;
+    }
+    
+    .header_navigation__phone {
+        display: flex;
+        align-items: center;
+    }
+    
+    .header_navigation__phone img {
+        height: 17px;
+        width: 17px;
+        margin-right: 3px;
+    }
+    
+    .header_navigation__phone p {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .header {
+        margin-top: 92px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .header_infomation h1 {
+        margin-top: 40px;
+        font-family: Misto;
+        font-weight: normal;
+        font-size: 78px;
+        letter-spacing: 7px;
+    }
+    
+    .head_text {
+        margin-top: 18px;
+        font-size: 20px;
+        width: 350px;
+        margin-bottom: 80px;
+    }
+    
+    .header_btn {
+        padding: 16px 70px;
+        border: #000 solid 0.5px;
+        text-transform: uppercase;
+    }
+    
+    .header img {
+        margin-right: -70px;
+    }
+    
+    .about_conteiner {
+        margin-top: 100px;
+        width: 100%;
+        background-color: #D9D9D9;
+        padding: 45px 0;
+    }
+    
+    .conteiner_display {
+        display: flex;
+    }
+    
+    .conteiner_display img {
+        margin-left: -50px;
+    }
+    
+    h2 {
+        width: 680px;
+        margin-top: 55px;
+        font-family: Misto;
+        font-size: 46px;
+        font-weight: normal;
+        line-height: 60px;
+        letter-spacing: 5px;
+    }
+    
+    .about_conteiner__information p:nth-child(2) {
+        margin-top: 28px;
+    }
+    
+    .about_conteiner__information p:nth-child(3) {
+        width: 430px;
+        font-weight: normal;
+    }
+    
+    .advantages_container {
+        margin-top: 100px;
+    }
+    
+    .advantages_container__row_1,
+    .advantages_container__row_2 {
+        margin-top: 45px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    h3 {
+        font-family: Misto;
+        font-size: 22px;
+        font-weight: normal;
+    }
+    
+    .advantages_container__row_1__elements__1,
+    .advantages_container__row_1__elements__2,
+    .advantages_container__row_2__elements__1,
+    .advantages_container__row_2__elements__2 {
+        border: #FF6565 solid 0.5px;
+        padding: 28px 80px;
+        width: 560px;
+        margin-right: 45px;
+    }
+    
+    .advantages_container__row_1__elements__1 {
+        border-radius: 0 121px 0 121px;
+    }
+    
+    .advantages_container__row_1__elements__2 {
+        border-radius: 121px 0 121px 0;
+    }
+    
+    .advantages_container__row_2__elements__1 {
+        border-radius: 121px 0 121px 0;
+    }
+    
+    .advantages_container__row_2__elements__2 {
+        border-radius: 0 121px 0 121px;
+    }
+    
+    .advantages_container__row_1__elements__1 p,
+    .advantages_container__row_1__elements__2 p,
+    .advantages_container__row_2__elements__1 p,
+    .advantages_container__row_2__elements__2 p {
+        margin-top: 10px;
+        width: 330px;
+    }
+    
+    .register_container {
+        margin-top: 100px;
+        width: 100%;
+        background-color: #D9D9D9;
+        padding: 45px 0;
+    }
+    
+    .register_container__display {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .register_container__information p {
+        margin-top: 28px;
+        width: 460px;
+    }
+    
+    .teacher_container {
+        margin-top: 100px;
+    }
+    
+    .slider-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 45px;
+    }
+    
+    .slider-wrapper img {
+        cursor: pointer;
+    }
+    
+    .slide-content {
+        display: flex;
+        align-items: center;
+        width: 900px;
+        border: #FF6565 solid 0.5px;
+        padding: 45px 90px 45px 35px;
+        border-radius: 0 172px 0 172px;
+    }
+    
+    .teacher-info p {
+        margin-top: 18px;
+        width: 360px;
+    }
+    
+    .teacher-stats {
+        margin-top: 24px;
+    }
+    
+    .stat-item,
+    .achievements {
+        display: flex;
+        align-items: center;
+        margin-top: 18px;
+    }
+    
+    h4 {
+        font-family: Misto;
+        font-size: 46px;
+        font-weight: normal;
+        margin-right: 15px;
+        color: #4770FF;
+        align-items: stretch;
+    }
+    
+    .child_container {
+        margin-top: 100px;
+    }
+    
+    .child_container_row_1 {
+        margin-top: 45px;
+    }
+    
+    .child_container_row_1 img:nth-child(1),
+    .child_container_row_2 img:nth-child(1) {
+        margin-right: 40px;
+    }
+    
+    .child_container_row_2 {
+        margin-top: 40px;
+    }
+    
+    .contacts_container {
+        margin-top: 100px;
+        width: 100%;
+        background-color: #D9D9D9;
+        padding: 45px 0;
+    }
+    
+    .contacts_container_display {
+        display: flex;
+    }
+    
+    .contacts_container__infomation {
+        margin-left: 72px;
+    }
+    
+    .phone {
+        margin-top: 12px;
+    }
+    
+    .address,
+    .mode,
+    .email {
+        margin-top: 18px;
+    }
+    
+    .name_contacts {
+        margin-bottom: -10px;
+        font-size: 13px;
+        font-weight: 400;
+        text-transform: uppercase;
+        color: #4F4F4F;
+    }
+    
+    .data_contacts {
+        font-size: 20px;
+        font-weight: 600;
+    }
+    
+    .degree {
+        vertical-align: super;
+        font-size: 13px;
+        vertical-align: super;
+    }
+    
+    .footer {
+        margin-top: 85px;
+    }
+    
+    .footer_contaiter {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .footer_contaiter a {
+        display: block;
+        margin-top: 15px;
+    }
+    
+    .footer_super {
+        vertical-align: super;
+        margin-left: 1px;
+        font-size: 9px;
+    }
