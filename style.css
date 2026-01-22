@@ -336,3 +336,55 @@
         margin-left: 1px;
         font-size: 9px;
     }
+    
+    .record {
+        width: 400px;
+        margin: auto;
+        padding: 45px;
+    }
+    
+    .record h2 {
+        margin: 0;
+    }
+    
+    .record_info {
+        margin-top: 40px;
+    }
+    
+    .record_info p {
+        font-size: 16px;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
+    
+    input {
+        all: unset;
+        border: #4F4F4F solid 0.5px;
+        padding: 10px 210px 10px 20px;
+        margin-top: 5px;
+        font-family: Montserrat;
+        font-size: 14px;
+    }
+    
+    .record_phone {
+        margin-top: 20px;
+    }
+    
+    .record_age {
+        margin-top: 20px;
+        margin-bottom: 80px;
+    }
+    
+    select {
+        border: #4F4F4F solid 0.5px;
+        padding: 10px 130px 10px 20px;
+        margin-top: 5px;
+        font-family: Montserrat;
+        font-size: 14px;
+        color: #4F4F4F;
+    }
+    
+    .record_info a {
+        margin-top: 30px;
+        padding: 16px 142px 16px 141px;
+    }
