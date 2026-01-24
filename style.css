@@ -40,33 +40,31 @@
         align-items: center;
     }
     
-    .header_navigation__language a {
-        font-size: 14px;
-    }
-    
-    .header_navigation__language a:nth-child(1) {
-        margin-right: 21px;
-    }
-    
     .header_navigation_nav a {
         margin-right: 50px;
     }
     
     .logo {
         font-family: Island Moments;
-        font-size: 36px;
+        font-size: 40px;
         color: #FF6565;
+    }
+    
+    .header_navigation_nav_contacts {
+        display: flex;
+        align-items: center;
     }
     
     .header_navigation__phone {
         display: flex;
         align-items: center;
+        margin-right: 20px;
     }
     
     .header_navigation__phone img {
-        height: 17px;
-        width: 17px;
-        margin-right: 3px;
+        height: 20px;
+        width: 20px;
+        margin-right: 5px;
     }
     
     .header_navigation__phone p {
@@ -74,10 +72,19 @@
         font-weight: bold;
     }
     
+    .header_navigation__tg {
+        height: 100px;
+        width: 25px;
+    }
+    
     .header {
         margin-top: 92px;
         display: flex;
         justify-content: space-between;
+    }
+    
+    .header_infomation {
+        display: block;
     }
     
     .header_infomation h1 {
@@ -98,6 +105,19 @@
     .header_btn {
         padding: 16px 70px;
         border: #000 solid 0.5px;
+        text-transform: uppercase;
+    }
+    
+    .header_btn:hover {
+        background-color: #FF6565;
+        border: none;
+        color: #fff;
+    }
+    
+    .header_btn_prise {
+        margin-top: -20px;
+        display: block;
+        margin-left: 300px;
         text-transform: uppercase;
     }
     
@@ -391,4 +411,111 @@
     .record_info a {
         margin-top: 30px;
         padding: 16px 142px 16px 141px;
+    }
+    
+    .prise {
+        max-width: 1200px;
+        margin: auto;
+    }
+    
+    .prise h2 {
+        width: 1200px;
+        margin-top: 60px;
+    }
+    
+    .prise_group {
+        margin-top: 40px;
+    }
+    
+    .prise_grops {
+        max-width: 1200px;
+        border: #4F4F4F solid 0.5px;
+        padding: 20px;
+        margin-right: 20px;
+    }
+    
+    .name_groups {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    
+    h5 {
+        font-family: Montserrat;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 32px;
+        color: #4770FF;
+        line-height: 25px;
+    }
+    
+    .name_group_age {
+        font-size: 18px;
+        font-weight: 700;
+        color: #4770FF;
+        text-transform: uppercase;
+    }
+    
+    .prise_grops_row1,
+    .prise_grops_row2 {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .name_block {
+        max-width: 100px;
+        font-size: 16px;
+        font-weight: normal;
+        text-transform: uppercase;
+        line-height: 30px;
+    }
+    
+    .session_group {
+        display: flex;
+    }
+    
+    .session {
+        margin-left: 20px;
+        margin-top: 8px;
+        border: #4F4F4F solid 0.5px;
+        padding: 20px;
+    }
+    
+    .session {
+        width: 270px;
+        padding: 20px;
+        display: grid;
+        grid-template-rows: auto auto 1fr
+    }
+    
+    .prise_name_lesson {
+        font-size: 18px;
+        font-weight: normal;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+    
+    .prise_blocks_info {
+        font-size: 14px;
+        line-height: 20px;
+        margin-top: 10px;
+        color: #4F4F4F;
+    }
+    
+    .prise_buy {
+        font-size: 20px;
+        color: #FF6565;
+        margin-top: 50px;
+        align-self: end;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    
+    .prise_buy_color {
+        font-size: 20px;
+        color: #4770FF;
+        margin-top: 50px;
+        align-self: end;
+        font-weight: 700;
     }

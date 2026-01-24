@@ -41,29 +41,14 @@ const teacherAchievementsText = document.getElementById('teacher-achievements-te
 const teacherPhoto = document.getElementById('teacher-photo');
 const prevBtn = document.querySelector('.prev-btn');
 const nextBtn = document.querySelector('.next-btn');
-const dotsContainer = document.querySelector('.slider-dots');
 
 let currentSlideIndex = 0;
 
 function initSlider() {
-    teachersData.forEach((_, index) => {
-        const dot = document.createElement('div');
-        dot.className = `dot ${index === currentSlideIndex ? 'active' : ''}`;
-        dot.dataset.index = index;
-        dotsContainer.appendChild(dot);
-    });
-
     updateSlideContent();
 
     prevBtn.addEventListener('click', showPrevSlide);
     nextBtn.addEventListener('click', showNextSlide);
-
-    dotsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('dot')) {
-            const index = parseInt(e.target.dataset.index);
-            goToSlide(index);
-        }
-    });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') showPrevSlide();
@@ -84,19 +69,6 @@ function updateSlideContent() {
     teacherAchievementsText.textContent = currentTeacher.achievementsText;
     teacherPhoto.src = currentTeacher.photo;
     teacherPhoto.alt = currentTeacher.name;
-
-    updateDots();
-}
-
-function updateDots() {
-    const dots = document.querySelectorAll('.dot');
-    dots.forEach((dot, index) => {
-        if (index === currentSlideIndex) {
-            dot.classList.add('active');
-        } else {
-            dot.classList.remove('active');
-        }
-    });
 }
 
 function showPrevSlide() {
@@ -113,13 +85,6 @@ function showNextSlide() {
         currentSlideIndex = 0;
     }
     updateSlideContent();
-}
-
-function goToSlide(index) {
-    if (index >= 0 && index < teachersData.length) {
-        currentSlideIndex = index;
-        updateSlideContent();
-    }
 }
 
 initSlider();
