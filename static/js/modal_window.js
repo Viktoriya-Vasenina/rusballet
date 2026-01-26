@@ -1,9 +1,47 @@
+function lockBodyScroll() {
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = scrollbarWidth + 'px';
+
+        const headerImg = document.querySelector('.header img');
+        if (headerImg) {
+            headerImg.dataset.originalMargin = headerImg.style.marginRight;
+            const currentMargin = parseInt(window.getComputedStyle(headerImg).marginRight) || -55;
+            headerImg.style.marginRight = (currentMargin - scrollbarWidth) + 'px';
+        }
+
+        const header = document.querySelector('.header');
+        if (header) {
+            header.dataset.originalPadding = header.style.paddingRight;
+            const currentPadding = parseInt(window.getComputedStyle(header).paddingRight) || 0;
+            header.style.paddingRight = (currentPadding + scrollbarWidth) + 'px';
+        }
+    }
+
+    document.body.style.overflow = 'hidden';
+}
+
+function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+    const headerImg = document.querySelector('.header img');
+    if (headerImg && headerImg.dataset.originalMargin !== undefined) {
+        headerImg.style.marginRight = headerImg.dataset.originalMargin;
+        delete headerImg.dataset.originalMargin;
+    }
+
+    const header = document.querySelector('.header');
+    if (header && header.dataset.originalPadding !== undefined) {
+        header.style.paddingRight = header.dataset.originalPadding;
+        delete header.dataset.originalPadding;
+    }
+}
+
 function createModalFromExisting() {
     const originalRecord = document.querySelector('.record');
-    if (!originalRecord) {
-        console.log('Элемент .record не найден на странице');
-        return null;
-    }
+    if (!originalRecord) return null;
 
     originalRecord.style.display = 'none';
 
@@ -71,10 +109,7 @@ function createModalFromExisting() {
 
 function createPriseModal() {
     const originalPrise = document.querySelector('.prise');
-    if (!originalPrise) {
-        console.log('Элемент .prise не найден на странице');
-        return null;
-    }
+    if (!originalPrise) return null;
 
     originalPrise.style.display = 'none';
 
@@ -142,11 +177,9 @@ function createPriseModal() {
 }
 
 function openModal() {
-    console.log('openModal вызвана');
     let modalContainer = document.getElementById('modalContainer');
 
     if (!modalContainer) {
-        console.log('Создаем модальное окно записи');
         modalContainer = createModalFromExisting();
         if (!modalContainer) return;
     }
@@ -157,15 +190,13 @@ function openModal() {
     }
 
     modalContainer.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
 }
 
 function openPriseModal() {
-    console.log('openPriseModal вызвана');
     let modalContainer = document.getElementById('priseModalContainer');
 
     if (!modalContainer) {
-        console.log('Создаем модальное окно прайса');
         modalContainer = createPriseModal();
         if (!modalContainer) return;
     }
@@ -176,7 +207,7 @@ function openPriseModal() {
     }
 
     modalContainer.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
 }
 
 function closeModal() {
@@ -184,7 +215,7 @@ function closeModal() {
     if (!modalContainer) return;
 
     modalContainer.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    unlockBodyScroll();
 }
 
 function closePriseModal() {
@@ -192,12 +223,10 @@ function closePriseModal() {
     if (!modalContainer) return;
 
     modalContainer.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    unlockBodyScroll();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM загружен');
-
     const originalRecord = document.querySelector('.record');
     if (originalRecord) {
         originalRecord.style.display = 'none';
@@ -209,22 +238,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const openButtons = document.querySelectorAll('.header_btn.open-modal-btn');
-    console.log('Найдено кнопок записи:', openButtons.length);
-
     openButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            console.log('Клик по кнопке записи');
             e.preventDefault();
             openModal();
         });
     });
 
     const priseButtons = document.querySelectorAll('.header_btn_prise');
-    console.log('Найдено кнопок прайса:', priseButtons.length);
-
     priseButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            console.log('Клик по кнопке прайса');
             e.preventDefault();
             openPriseModal();
         });

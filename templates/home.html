@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Comfortaa:wght@300..700&family=Great+Vibes&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Comfortaa:wght@300..700&family=Great+Vibes&family=Island+Moments&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
@@ -269,23 +270,24 @@
         <div class="record_info">
             <div class="record_name">
                 <p>Введите ваши ФИО</p>
-                <input type="text" placeholder="Введите данные">
+                <input type="text" id="fullName" placeholder="Введите данные">
             </div>
             <div class="record_phone">
                 <p>Введите ваш номер телефона</p>
-                <input type="text" placeholder="+7 9__ - __ - __">
+                <input type="tel" id="phone" placeholder="+7 9__ - __ - __">
             </div>
             <div class="record_age">
                 <p>Выбери возрастную группу</p>
-                <select id="age" name="age">  
-                    <option value="age_3_5">Младшая группа от 3 до 5 лет</option>  
-                    <option value="age_6_11">Средняя группа от 6 до 11 лет</option>  
-                    <option value="age_12_15">Старшая группа от 12 до 15 лет</option>  
-                    <option value="age_16-18">Взрослая группа от 16 до 18 лет</option>
-                 </select>
+                <select id="groupSelect" name="group_id" onchange="loadSchedule(this.value)">
+                <option value="">Загрузка групп...</option>
+            </select>
+                <div id="scheduleContainer">
+                    <h6>Выберите дату и время:</h6>
+                    <div id="scheduleItems"></div>
+                    <div id="selectedInfo"></div>
+                </div>
             </div>
-            <a href="" class="header_btn ">Записаться</a>
-
+            <a href="#" class="header_btn" onclick="submitBooking()" id="submitBtn">Записаться</a>
         </div>
     </div>
     <div class="container">
@@ -303,10 +305,10 @@
             </nav>
             <div class="header_navigation_nav_contacts">
                 <div class="header_navigation__phone">
-                    <img src="file/icon/phone.svg" alt="">
+                    <img src="{% static 'icons/phone.svg' %}" alt="">
                     <p>+7 495 123-45-67 </p>
                 </div>
-                <a href="" class="header_navigation__phone"><img src="file/icon/tg.svg" alt="" class="header_navigation__tg"></a>
+                <a href="" class="header_navigation__phone"><img src="{% static 'icons/tg.svg' %}" alt="" class="header_navigation__tg"></a>
             </div>
 
         </div>
@@ -325,13 +327,13 @@
 
 
             </div>
-            <img src="file/image/header_image.png" alt="image" class="header_img">
+            <img src="{% static 'images/header_image.png' %}" alt="image" class="header_img">
         </header>
     </div>
     <div class="about_conteiner" id="about">
         <div class="container">
             <div class="conteiner_display">
-                <img src="file/image/about.png" alt="">
+                <img src="{% static 'images/about.png' %}" alt="">
                 <div class="about_conteiner__information">
                     <h2>Добро пожаловать в <span class="heading">мир балета</span> </h2>
                     <p class="head_text">Меня зовут <span class="dop"> Наталья Кравц</span>, я — художественный руководитель.</p>
@@ -343,7 +345,7 @@
 
         </div>
     </div>
-    <div class="ad78vantages_container">
+    <div class="advantages_container">
         <div class="container">
             <h2> Почему <span class="heading">russballet?</span></h2>
             <div class="advantages_container__row_1">
@@ -378,11 +380,13 @@
                     <p class="head_text">На <span class="dop"> бесплатном пробном занятии</span>, Вы познакомитесь с профессиональным педагогическим коллективом, которые любят и знают свое дело, а так же получите индивидуальные рекомендации.</p>
                     <a href="" class="header_btn open-modal-btn">Записаться</a>
                 </div>
-                <img src="file/image/register.png" alt="">
+                <img src="{% static 'images/register.png' %}" alt="">
             </div>
 
         </div>
     </div>
+
+
     <div class="teacher_container" id="teacher">
         <div class="container">
             <div class="slider-header">
@@ -390,12 +394,11 @@
             </div>
 
             <div class="slider-wrapper">
-                <img class="slider-btn prev-btn" src="file/icon/akar-icons_chevron-left.svg">
-
+                <img class="slider-btn prev-btn" src="{% static 'icons/akar-icons_chevron-left.svg' %}">
 
                 <div class="slide-content">
                     <div class="teacher-photo">
-                        <img id="teacher-photo" src="" alt="Фото преподавателя">
+                        <img id="teacher-photo" src="{% static 'images/teacher_slide.png' %}" alt="Фото преподавателя">
                     </div>
                     <div class="display_block">
                         <div class="teacher-info">
@@ -419,25 +422,23 @@
                             <p id="teacher-achievements-text">учеников призеров</p>
                         </div>
                     </div>
-
-
                 </div>
-                <img class="slider-btn next-btn" src="file/icon/akar-icons_chevron-right.svg">
+
+                <img class="slider-btn next-btn" src="{% static 'icons/akar-icons_chevron-right.svg' %}">
                 <div class="slider-dots"></div>
             </div>
-
         </div>
     </div>
     <div class="child_container" id="child">
         <div class="container">
             <h2>наши <span class="heading">ученики</span></h2>
             <div class="child_container_row_1">
-                <img src="file/image/portfolio_1.png" alt="">
-                <img src="file/image/portfolio_2.png" alt="">
+                <img src="{% static 'images/portfolio_1.png' %}" alt="">
+                <img src="{% static 'images/portfolio_2.png' %}" alt="">
             </div>
             <div class="child_container_row_2">
-                <img src="file/image/portfolio_3.png" alt="">
-                <img src="file/image/portfolio_4.png" alt="">
+                <img src="{% static 'images/portfolio_3.png' %}" alt="">
+                <img src="{% static 'images/portfolio_4.png' %}" alt="">
             </div>
 
 
@@ -503,9 +504,10 @@
 
         </div>
     </div>
-    <script src="js/modal_window.js"></script>
-    <script src="js/slide_bar.js"></script>
-    <script src="js/stop_vertical__scroll.js"></script>
+    <script src="{% static 'js/modal_window.js' %}"></script>
+    <script src="{% static 'js/slide_bar.js' %}"></script>
+    <script src="{% static 'js/record.js' %}"></script>
+
 </body>
 
 </html>
