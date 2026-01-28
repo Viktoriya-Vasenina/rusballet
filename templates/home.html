@@ -264,27 +264,39 @@
         </div>
 
     </div>
-    <div class="record">
+    <div class="record" style="display: none;">
         <h2>Запишитесь</h2>
         <p class="dop_h2">на свое первое занятие</p>
         <div class="record_info">
             <div class="record_name">
                 <p>Введите ваши ФИО</p>
-                <input type="text" id="fullName" placeholder="Введите данные">
+                <input type="text" id="fullName" required placeholder="Введите данные">
             </div>
             <div class="record_phone">
                 <p>Введите ваш номер телефона</p>
-                <input type="tel" id="phone" placeholder="+7 9__ - __ - __">
+                <input type="tel" id="phone" required placeholder="+7 9__ - __ - __">
             </div>
             <div class="record_age">
-                <p>Выбери возрастную группу</p>
-                <select id="groupSelect" name="group_id" onchange="loadSchedule(this.value)">
+                <p>Выберите возрастную группу</p>
+                <select class="group" id="groupSelect" name="group_id" onchange="loadSchedule(this.value)">
                 <option value="">Загрузка групп...</option>
             </select>
-                <div id="scheduleContainer">
-                    <h6>Выберите дату и время:</h6>
-                    <div id="scheduleItems"></div>
-                    <div id="selectedInfo"></div>
+                <div id="scheduleContainer" style="display: none;">
+                    <h6 class="date">Выберите дату и время:</h6>
+                    <div class="schedule-date-block">
+                        <div class="date-header">07 февраля 2026 года</div>
+
+                        <div class="time-slots-container" required>
+                            <div class="time-slot">
+                                <span class="time">10:00</span>
+                                </hr>
+                                <span class="seats-info">мест 4 из 5</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+
                 </div>
             </div>
             <a href="#" class="header_btn" onclick="submitBooking()" id="submitBtn">Записаться</a>
@@ -506,7 +518,7 @@
     </div>
     <script src="{% static 'js/modal_window.js' %}"></script>
     <script src="{% static 'js/slide_bar.js' %}"></script>
-    <script src="{% static 'js/record.js' %}"></script>
+
 
 </body>
 

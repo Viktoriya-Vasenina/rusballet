@@ -390,6 +390,14 @@ input {
     font-size: 14px;
 }
 
+input:focus {
+    border: #4770FF solid 0.5px;
+}
+
+input:valid {
+    border: #339139 solid 0.5px;
+}
+
 .record_phone {
     margin-top: 20px;
 }
@@ -518,4 +526,52 @@ h5 {
     margin-top: 50px;
     align-self: end;
     font-weight: 700;
+}
+
+.date {
+    margin-top: 40px;
+    font-size: 16px;
+    font-weight: 400;
+    text-transform: uppercase;
+    font-family: Montserrat;
+}
+
+.schedule-date-block {
+    margin-top: 10px;
+    padding: 20px;
+    border: #000 solid 0.5px;
+}
+
+.date-header {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: Montserrat;
+}
+
+.time-slots-container {
+    margin-top: 10px;
+    display: flex;
+}
+
+.time-slot {
+    padding: 10px;
+    border: #4F4F4F solid 0.2px;
+    border-radius: 10px;
+    box-shadow: 0 0px 10px rgba(0, 0, 0, 0.08);
+    margin-right: 10px;
+    width: 200px;
+}
+
+.time {
+    display: block;
+    font-family: Montserrat;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.seats-info {
+    margin-top: 5px;
+    font-family: Montserrat;
+    font-size: 14px;
 }
