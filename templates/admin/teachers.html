@@ -1,0 +1,244 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Преподаватели | ROSUBLET{% endblock %} {% block page_title %}Преподаватели{% endblock %} {% block content %}
+<!-- Панель поиска и фильтров -->
+<div class="filters-bar" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 250px;">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Поиск по имени или email..." style="width: 100%; padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.95rem;">
+    </div>
+
+    <select id="statusFilter" class="filter-select" style="padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 150px;">
+        <option value="">Все статусы</option>
+        <option value="active">Активные</option>
+        <option value="inactive">Неактивные</option>
+    </select>
+
+    <button id="addTeacherBtn" class="btn-primary" style="padding: 12px 25px;">
+        <i class="fas fa-plus"></i> Добавить преподавателя
+    </button>
+</div>
+
+<!-- Список преподавателей -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Список преподавателей</h3>
+        <div class="bulk-actions" style="display: flex; gap: 10px; align-items: center;">
+            <input type="checkbox" id="selectAll">
+            <label for="selectAll">Выбрать всех</label>
+
+            <select id="bulkAction" class="bulk-select" style="padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                <option value="">Массовые действия</option>
+                <option value="active">Активировать</option>
+                <option value="inactive">Деактивировать</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="teachersTable">
+        <thead>
+            <tr>
+                <th style="width: 30px;"><input type="checkbox" class="select-all"></th>
+                <th>ID</th>
+                <th>Фото</th>
+                <th>ФИО</th>
+                <th>Email</th>
+                <th>Группы</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teacher in teachers %}
+            <tr data-teacher-id="{{ teacher.id }}" data-status="{% if teacher.is_active %}active{% else %}inactive{% endif %}">
+                <td><input type="checkbox" class="select-item" data-id="{{ teacher.id }}"></td>
+                <td>#{{ teacher.id }}</td>
+                <td>
+                    <img src="https://ui-avatars.com/api/?name={{ teacher.first_name }}+{{ teacher.last_name }}&background=8B5CF6&color=fff&size=40" style="width: 40px; height: 40px; border-radius: 50%;" alt="{{ teacher.get_full_name }}">
+                </td>
+                <td>
+                    <strong>{{ teacher.last_name }} {{ teacher.first_name }}</strong>
+                    <br><small style="color: #64748B;">@{{ teacher.username }}</small>
+                </td>
+                <td>{{ teacher.email|default:"—" }}</td>
+                <td>
+                    {% for group in teacher.teaching_groups.all %}
+                    <span class="badge">{{ group.name }}</span> {% empty %}
+                    <span class="text-muted">Нет групп</span> {% endfor %}
+                </td>
+                <td>
+                    <span class="status-badge {% if teacher.is_active %}confirmed{% else %}cancelled{% endif %}">
+                        {% if teacher.is_active %}Активен{% else %}Неактивен{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="edit-btn" data-id="{{ teacher.id }}" data-firstname="{{ teacher.first_name }}" data-lastname="{{ teacher.last_name }}" data-email="{{ teacher.email }}" data-username="{{ teacher.username }}" data-status="{% if teacher.is_active %}active{% else %}inactive{% endif %}"
+                            title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-chalkboard-teacher" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет преподавателей</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Модальное окно добавления/редактирования преподавателя -->
+<div id="teacherModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Добавить преподавателя</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="teacherForm">
+                <input type="hidden" id="teacherId" name="teacher_id">
+
+                <div class="form-group">
+                    <label>Имя пользователя (логин) <span style="color: #EF4444;">*</span></label>
+                    <input type="text" id="username" name="username" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Имя <span style="color: #EF4444;">*</span></label>
+                        <input type="text" id="firstName" name="first_name" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Фамилия <span style="color: #EF4444;">*</span></label>
+                        <input type="text" id="lastName" name="last_name" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+
+                <!-- Поле выбора группы -->
+                <div class="form-group">
+                    <label>Группа</label>
+                    <select id="teacherGroup" name="group" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="">-- Без группы --</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }} ({{ group.age_min }}-{{ group.age_max }} лет)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label>Пароль <span style="color: #EF4444;" id="passwordRequired">*</span></label>
+                    <input type="password" id="password" name="password" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <small style="color: #64748B;" id="passwordHelp">Минимум 8 символов</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select id="status" name="is_active" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="active">Активен (есть доступ к админке)</option>
+                        <option value="inactive">Неактивен (нет доступа к админке)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+            <button class="btn-primary" onclick="saveTeacher()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #8B5CF6;
+        color: white;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin: 2px;
+    }
+    
+    .text-muted {
+        color: #94A3B8;
+        font-size: 0.85rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #475569;
+        font-weight: 500;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.5rem;
+        color: #1E293B;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #94A3B8;
+    }
+    
+    .modal-close:hover {
+        color: #EF4444;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,588 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Группы | ROSUBLET{% endblock %} {% block page_title %}Управление группами{% endblock %} {% block content %}
+<!-- Панель поиска и кнопка добавления -->
+<div class="filters-bar" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 250px;">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Поиск по названию группы..." style="width: 100%; padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.95rem;">
+    </div>
+
+    <button id="addGroupBtn" class="btn-primary" style="padding: 12px 25px;">
+        <i class="fas fa-plus"></i> Добавить группу
+    </button>
+</div>
+
+<!-- Список групп -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Список групп</h3>
+    </div>
+
+    <table id="groupsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Возраст</th>
+                <th>Преподаватель</th>
+                <th>Кол-во учеников</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+            <tr data-group-id="{{ group.id }}">
+                <td>#{{ group.id }}</td>
+                <td><strong>{{ group.name }}</strong></td>
+                <td>{{ group.age_min }}-{{ group.age_max }} лет</td>
+                <td>
+                    {% if group.teacher %} {{ group.teacher.last_name }} {{ group.teacher.first_name }} {% else %}
+                    <span class="text-muted">Не назначен</span> {% endif %}
+                </td>
+                <td>
+                    <span class="badge" style="background: #10B981;">{{ group.students.count }}</span>
+                </td>
+                <td>
+                    <span class="status-badge {% if group.is_active %}confirmed{% else %}cancelled{% endif %}">
+                        {% if group.is_active %}Активна{% else %}Неактивна{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="view-students-btn" data-id="{{ group.id }}" data-name="{{ group.name }}" title="Просмотреть учеников">
+                            <i class="fas fa-users" style="color: #3B82F6;"></i>
+                        </button>
+                        <button class="edit-btn" data-id="{{ group.id }}" data-name="{{ group.name }}" data-age_min="{{ group.age_min }}" data-age_max="{{ group.age_max }}" data-teacher="{{ group.teacher.id|default:'' }}" data-is_active="{{ group.is_active }}" title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn" data-id="{{ group.id }}" data-name="{{ group.name }}" title="Удалить">
+                            <i class="fas fa-trash" style="color: #EF4444;"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-layer-group" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет групп</p>
+                    <button id="emptyAddBtn" class="btn-primary" style="margin-top: 15px;">
+                        <i class="fas fa-plus"></i> Добавить первую группу
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Модальное окно добавления/редактирования группы -->
+<div id="groupModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Добавить группу</h3>
+            <button class="modal-close" onclick="closeGroupModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="groupForm">
+                <input type="hidden" id="groupId" name="group_id">
+
+                <div class="form-group">
+                    <label>Название группы <span style="color: #EF4444;">*</span></label>
+                    <input type="text" id="name" name="name" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Мин. возраст <span style="color: #EF4444;">*</span></label>
+                        <input type="number" id="age_min" name="age_min" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;" min="1" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Макс. возраст <span style="color: #EF4444;">*</span></label>
+                        <input type="number" id="age_max" name="age_max" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;" min="1" max="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Преподаватель</label>
+                    <select id="teacher" name="teacher" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="">-- Не назначен --</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.last_name }} {{ teacher.first_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select id="is_active" name="is_active" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="true">Активна</option>
+                        <option value="false">Неактивна</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeGroupModal()">Отмена</button>
+            <button class="btn-primary" onclick="saveGroup()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 style="color: #EF4444;">Подтверждение удаления</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Вы уверены, что хотите удалить группу <strong id="deleteGroupName"></strong>?</p>
+            <p style="color: #EF4444; font-size: 0.9rem;">Это действие нельзя отменить.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeDeleteModal()">Отмена</button>
+            <button class="btn-primary" style="background: #EF4444;" onclick="confirmDelete()">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно просмотра учеников группы -->
+<div id="studentsModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3 id="studentsModalTitle">Ученики группы</h3>
+            <button class="modal-close" onclick="closeStudentsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1;">
+                    <input type="text" id="studentSearchInput" class="filter-input" placeholder="Поиск по имени ученика..." style="width: 100%; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+                <span id="studentsCount" class="badge" style="background: #8B5CF6; padding: 8px 16px;">0 учеников</span>
+            </div>
+            <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+                <table id="groupStudentsTable" style="width: 100%; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background: #F8FAFC;">
+                        <tr>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">ID</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">ФИО</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">Телефон</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">Возраст</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">Дата рег.</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">Статус</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #E2E8F0;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupStudentsBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #8B5CF6;"></i>
+                                <p>Загрузка...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeStudentsModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #8B5CF6;
+        color: white;
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+    
+    .text-muted {
+        color: #94A3B8;
+        font-size: 0.85rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #475569;
+        font-weight: 500;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-content[style*="max-width: 900px"] {
+        max-width: 900px;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.5rem;
+        color: #1E293B;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #94A3B8;
+    }
+    
+    .modal-close:hover {
+        color: #EF4444;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    
+    .action-buttons button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        transition: all 0.3s;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .action-buttons button:hover {
+        background: #F1F5F9;
+        transform: scale(1.1);
+    }
+    
+    .action-buttons i {
+        font-size: 0, 9rem;
+    }
+</style>
+
+<script>
+    let currentDeleteId = null;
+    let currentGroupId = null;
+
+    $(document).ready(function() {
+        if (window.location.pathname.includes('/groups')) {
+            initGroupsPage();
+        }
+    });
+
+    function initGroupsPage() {
+        // Поиск по таблице
+        let searchTimeout;
+        $('#searchInput').on('keyup', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                let searchText = $(this).val().toLowerCase();
+                $('#groupsTable tbody tr').each(function() {
+                    let text = $(this).text().toLowerCase();
+                    $(this).toggle(text.includes(searchText));
+                });
+            }, 300);
+        });
+
+        // Кнопка добавления группы
+        $('#addGroupBtn, #emptyAddBtn').click(function() {
+            openGroupModal();
+        });
+
+        // Кнопки редактирования
+        $('.edit-btn').click(function() {
+            let id = $(this).data('id');
+            let name = $(this).data('name');
+            let age_min = $(this).data('age_min');
+            let age_max = $(this).data('age_max');
+            let teacher = $(this).data('teacher');
+            let is_active = $(this).data('is_active');
+
+            openGroupModal(id, name, age_min, age_max, teacher, is_active);
+        });
+
+        // Кнопки удаления
+        $('.delete-btn').click(function() {
+            currentDeleteId = $(this).data('id');
+            let name = $(this).data('name');
+            $('#deleteGroupName').text(name);
+            $('#deleteModal').addClass('active');
+        });
+
+        // Кнопки просмотра учеников
+        $('.view-students-btn').click(function() {
+            let groupId = $(this).data('id');
+            let groupName = $(this).data('name');
+            currentGroupId = groupId;
+            $('#studentsModalTitle').text(`Ученики группы "${groupName}"`);
+            loadGroupStudents(groupId);
+            $('#studentsModal').addClass('active');
+        });
+    }
+
+    function loadGroupStudents(groupId) {
+        $('#groupStudentsBody').html(`
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #8B5CF6;"></i>
+                    <p>Загрузка...</p>
+                </td>
+            </tr>
+        `);
+
+        $.ajax({
+            url: '/dashboard/api/group/' + groupId + '/students/',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                displayGroupStudents(response.students);
+            },
+            error: function() {
+                $('#groupStudentsBody').html(`
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #EF4444;">
+                            <i class="fas fa-exclamation-circle" style="font-size: 24px;"></i>
+                            <p>Ошибка загрузки данных</p>
+                        </td>
+                    </tr>
+                `);
+            }
+        });
+    }
+
+    function displayGroupStudents(students) {
+        if (!students || students.length === 0) {
+            $('#groupStudentsBody').html(`
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 30px;">
+                        <i class="fas fa-users" style="font-size: 24px; color: #ccc;"></i>
+                        <p>В этой группе нет учеников</p>
+                    </td>
+                </tr>
+            `);
+            $('#studentsCount').text('0 учеников');
+            return;
+        }
+
+        let html = '';
+        students.forEach(function(s) {
+            let statusClass = s.is_active ? 'confirmed' : 'cancelled';
+            let statusText = s.is_active ? 'Активен' : 'Неактивен';
+
+            html += `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">#${s.id}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">
+                        <strong>${s.last_name} ${s.first_name}</strong><br>
+                        <small style="color: #64748B;">@${s.username}</small>
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${s.phone || '—'}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${s.age ? s.age + ' лет' : '—'}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${s.date_joined}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </td>
+                    <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">
+                        <button class="view-student-btn" data-id="${s.id}" title="Просмотреть">
+                            <i class="fas fa-eye" style="color: #3B82F6;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        $('#groupStudentsBody').html(html);
+        $('#studentsCount').text(students.length + ' учеников');
+
+        // Поиск по таблице учеников
+        $('#studentSearchInput').off('keyup').on('keyup', function() {
+            let searchText = $(this).val().toLowerCase();
+            $('#groupStudentsBody tr').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(searchText));
+            });
+        });
+
+        // Кнопки просмотра ученика
+        $('.view-student-btn').click(function() {
+            let studentId = $(this).data('id');
+            window.location.href = '/dashboard/students/?student=' + studentId;
+        });
+    }
+
+    function openGroupModal(id, name, age_min, age_max, teacher, is_active) {
+        if (id) {
+            $('#modalTitle').text('Редактировать группу');
+            $('#groupId').val(id);
+            $('#name').val(name);
+            $('#age_min').val(age_min);
+            $('#age_max').val(age_max);
+            $('#teacher').val(teacher);
+            $('#is_active').val(is_active ? 'true' : 'false');
+        } else {
+            $('#modalTitle').text('Добавить группу');
+            $('#groupId').val('');
+            $('#name').val('');
+            $('#age_min').val('');
+            $('#age_max').val('');
+            $('#teacher').val('');
+            $('#is_active').val('true');
+        }
+        $('#groupModal').addClass('active');
+    }
+
+    window.closeGroupModal = function() {
+        $('#groupModal').removeClass('active');
+    };
+
+    window.closeDeleteModal = function() {
+        $('#deleteModal').removeClass('active');
+        currentDeleteId = null;
+    };
+
+    window.closeStudentsModal = function() {
+        $('#studentsModal').removeClass('active');
+        $('#studentSearchInput').val('');
+        currentGroupId = null;
+    };
+
+    window.saveGroup = function() {
+        let data = {
+            group_id: $('#groupId').val(),
+            name: $('#name').val().trim(),
+            age_min: $('#age_min').val(),
+            age_max: $('#age_max').val(),
+            teacher_id: $('#teacher').val(),
+            is_active: $('#is_active').val() === 'true'
+        };
+
+        if (!data.name || !data.age_min || !data.age_max) {
+            alert('Заполните название и возраст');
+            return;
+        }
+
+        if (parseInt(data.age_min) > parseInt(data.age_max)) {
+            alert('Минимальный возраст не может быть больше максимального');
+            return;
+        }
+
+        $.ajax({
+            url: '/dashboard/api/group/save/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    alert('Группа сохранена');
+                    closeGroupModal();
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + response.error);
+                }
+            },
+            error: function() {
+                alert('Ошибка соединения');
+            }
+        });
+    };
+
+    window.confirmDelete = function() {
+        if (!currentDeleteId) return;
+
+        $.ajax({
+            url: '/dashboard/api/group/delete/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            data: JSON.stringify({
+                group_id: currentDeleteId
+            }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    alert('Группа удалена');
+                    closeDeleteModal();
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + response.error);
+                }
+            },
+            error: function() {
+                alert('Ошибка соединения');
+            }
+        });
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            let cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

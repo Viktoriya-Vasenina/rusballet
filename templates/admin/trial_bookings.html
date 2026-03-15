@@ -1,0 +1,357 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Пробные занятия | ROSUBLET{% endblock %} {% block page_title %}Заявки на пробные занятия{% endblock %} {% block content %}
+<!-- Панель поиска и фильтров -->
+<div class="filters-bar" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 250px;">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Поиск по родителю или ребенку..." style="width: 100%; padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.95rem;">
+    </div>
+
+    <select id="statusFilter" class="filter-select" style="padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 150px;">
+        <option value="">Все статусы</option>
+        <option value="pending">⏳ Ожидает</option>
+        <option value="confirmed">✅ Подтверждена</option>
+        <option value="cancelled">❌ Отменена</option>
+        <option value="completed">✔️ Проведена</option>
+    </select>
+
+    <select id="groupFilter" class="filter-select" style="padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 150px;">
+        <option value="">Все группы</option>
+        {% for group in groups %}
+        <option value="{{ group.id }}">{{ group.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h3>Записи на пробные занятия</h3>
+        <div class="table-actions">
+            <span class="badge" style="background: #8B5CF6; padding: 8px 16px;">
+                <i class="fas fa-clock"></i> Всего: {{ trial_bookings|length }}
+            </span>
+        </div>
+    </div>
+
+    <table id="trialTable">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Родитель</th>
+                <th>Телефон</th>
+                <th>Ребенок</th>
+                <th>Группа</th>
+                <th>Преподаватель</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in trial_bookings %}
+            <tr data-status="{{ booking.status }}" data-group="{{ booking.schedule.group.id }}">
+                <td>{{ booking.schedule.date|date:"d.m.Y" }}</td>
+                <td>{{ booking.schedule.start_time|time:"H:i" }}</td>
+                <td>{{ booking.full_name }}</td>
+                <td>{{ booking.phone }}</td>
+                <td>{{ booking.child_name }} ({{ booking.child_age }} лет)</td>
+                <td>{{ booking.schedule.group.name }}</td>
+                <td>{{ booking.schedule.group.teacher.last_name|default:"—" }}</td>
+                <td>
+                    <span class="status-badge {{ booking.status }}">
+                        {% if booking.status == 'pending' %}⏳ Ожидает
+                        {% elif booking.status == 'confirmed' %}✅ Подтверждена
+                        {% elif booking.status == 'cancelled' %}❌ Отменена
+                        {% elif booking.status == 'completed' %}✔️ Проведена
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        {% if booking.status == 'pending' %}
+                        <button class="confirm-trial" data-id="{{ booking.id }}" data-fullname="{{ booking.full_name }}" data-phone="{{ booking.phone }}" data-childname="{{ booking.child_name }}" data-childage="{{ booking.child_age }}" data-group="{{ booking.schedule.group.id }}"
+                            title="Подтвердить и создать ученика">
+                                <i class="fas fa-check-circle" style="color: #10B981; font-size: 1.2rem;"></i>
+                            </button>
+                        <button class="cancel-trial" data-id="{{ booking.id }}" data-status="pending" title="Отменить заявку">
+                                <i class="fas fa-times-circle" style="color: #EF4444; font-size: 1.2rem;"></i>
+                            </button> {% elif booking.status == 'confirmed' %}
+                        <button class="complete-trial" data-id="{{ booking.id }}" title="Отметить проведенным">
+                                <i class="fas fa-check-double" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                            </button>
+                        <button class="cancel-trial" data-id="{{ booking.id }}" data-status="confirmed" title="Отменить и удалить ученика">
+                                <i class="fas fa-times-circle" style="color: #EF4444; font-size: 1.2rem;"></i>
+                            </button> {% elif booking.status == 'cancelled' %}
+                        <button class="restore-trial" data-id="{{ booking.id }}" title="Восстановить заявку">
+                                <i class="fas fa-undo-alt" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                            </button>
+                        <span class="status-text">Отменена</span> {% elif booking.status == 'completed' %}
+                        <span class="status-text">Проведена</span> {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-clock" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет пробных записей</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-start;
+        align-items: center;
+        min-width: 120px;
+    }
+    
+    .action-buttons button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        transition: all 0.3s;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .action-buttons button:hover {
+        background: #F1F5F9;
+        transform: scale(1.1);
+    }
+    
+    .status-text {
+        color: #94A3B8;
+        font-size: 0.9rem;
+        line-height: 32px;
+        display: inline-block;
+        min-width: 70px;
+        text-align: left;
+        margin-left: 4px;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // Функция для получения CSRF токена
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                let cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Функция показа уведомлений
+        window.showNotification = function(message, type) {
+            $('.notification').remove();
+            let notification = $('<div class="notification ' + type + '">' + message + '</div>');
+            $('body').append(notification);
+            notification.fadeIn(300);
+            setTimeout(function() {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        };
+
+        // Сортируем строки: сначала ожидающие, потом остальные
+        function sortByStatus() {
+            let tbody = $('#trialTable tbody');
+            let rows = tbody.find('tr').get();
+
+            rows.sort(function(a, b) {
+                let statusA = $(a).data('status');
+                let statusB = $(b).data('status');
+                let priority = {
+                    'pending': 1,
+                    'confirmed': 2,
+                    'completed': 3,
+                    'cancelled': 4
+                };
+                return (priority[statusA] || 99) - (priority[statusB] || 99);
+            });
+
+            tbody.empty().append(rows);
+        }
+        sortByStatus();
+
+        // Поиск и фильтры
+        let searchTimeout;
+        $('#searchInput').on('keyup', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => filterTable(), 300);
+        });
+
+        $('#statusFilter, #groupFilter').on('change', function() {
+            filterTable();
+        });
+
+        function filterTable() {
+            let searchText = $('#searchInput').val().toLowerCase();
+            let status = $('#statusFilter').val();
+            let group = $('#groupFilter').val();
+
+            $('#trialTable tbody tr').each(function() {
+                let show = true;
+                let row = $(this);
+
+                if (searchText) {
+                    let text = row.text().toLowerCase();
+                    if (!text.includes(searchText)) show = false;
+                }
+
+                if (show && status && row.data('status') !== status) show = false;
+                if (show && group && row.data('group') != group) show = false;
+
+                row.toggle(show);
+            });
+        }
+
+        // Подтверждение заявки
+        $('.confirm-trial').click(function() {
+            let btn = $(this);
+            if (confirm(`Подтвердить заявку и создать ученика ${btn.data('fullname')}?`)) {
+                $.ajax({
+                    url: '/dashboard/api/confirm-trial/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        booking_id: btn.data('id'),
+                        full_name: btn.data('fullname'),
+                        phone: btn.data('phone'),
+                        child_name: btn.data('childname'),
+                        child_age: btn.data('childage'),
+                        group_id: btn.data('group')
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ Ученик создан! Логин: ' + response.username, 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+
+        // Отмена заявки (с удалением ученика, если была подтверждена)
+        $('.cancel-trial').click(function() {
+            let btn = $(this);
+            let bookingId = btn.data('id');
+            let status = btn.data('status');
+
+            let message = (status === 'confirmed') ?
+                'Отменить заявку? Ученик будет полностью удален из системы.' :
+                'Отменить заявку?';
+
+            if (confirm(message)) {
+                $.ajax({
+                    url: '/dashboard/api/cancel-trial/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        booking_id: bookingId
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ Заявка отменена' + (status === 'confirmed' ? ', ученик удален' : ''), 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+
+        // Отметка о проведении
+        $('.complete-trial').click(function() {
+            let btn = $(this);
+            if (confirm('Отметить занятие как проведенное?')) {
+                $.ajax({
+                    url: '/dashboard/api/update-booking/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        booking_id: btn.data('id'),
+                        status: 'completed'
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ Занятие отмечено проведенным', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+
+        // Восстановление отмененной заявки
+        $('.restore-trial').click(function() {
+            let btn = $(this);
+            if (confirm('Восстановить заявку? Она снова появится в списке ожидающих.')) {
+                $.ajax({
+                    url: '/dashboard/api/update-booking/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        booking_id: btn.data('id'),
+                        status: 'pending'
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ Заявка восстановлена', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

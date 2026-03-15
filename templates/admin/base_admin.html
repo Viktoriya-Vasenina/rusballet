@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ROSUBLET Админ{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> {% load static %}
+    <link rel="stylesheet" href="{% static 'admin/css/admin.css' %}"> {% block extra_css %}{% endblock %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="admin-container">
+        {% include 'admin/includes/sidebar.html' %}
+
+        <main class="main-content">
+            {% include 'admin/includes/topbar.html' %}
+
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'admin/js/admin.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

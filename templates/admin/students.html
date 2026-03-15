@@ -1,0 +1,282 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Ученики | ROSUBLET{% endblock %} {% block page_title %}Ученики{% endblock %} {% block content %}
+<!-- Панель поиска и фильтров -->
+<div class="filters-bar" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 250px;">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Поиск по имени или телефону..." style="width: 100%; padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.95rem;">
+    </div>
+
+    <select id="statusFilter" class="filter-select" style="padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 150px;">
+        <option value="">Все статусы</option>
+        <option value="active">Активные</option>
+        <option value="inactive">Неактивные</option>
+    </select>
+
+    <select id="groupFilter" class="filter-select" style="padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 150px;">
+        <option value="">Все группы</option>
+        {% for group in groups %}
+        <option value="{{ group.id }}">{{ group.name }}</option>
+        {% endfor %}
+    </select>
+
+    <button id="addStudentBtn" class="btn-primary" style="padding: 12px 25px;">
+        <i class="fas fa-user-plus"></i> Добавить ученика
+    </button>
+</div>
+
+<!-- Список учеников -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Список учеников</h3>
+        <div class="bulk-actions" style="display: flex; gap: 10px; align-items: center;">
+            <input type="checkbox" id="selectAll">
+            <label for="selectAll">Выбрать всех</label>
+
+            <select id="bulkAction" class="bulk-select" style="padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                <option value="">Массовые действия</option>
+                <option value="active">Активировать</option>
+                <option value="inactive">Деактивировать</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="studentsTable">
+        <thead>
+            <tr>
+                <th style="width: 30px;"><input type="checkbox" class="select-all"></th>
+                <th>ID</th>
+                <th>Фото</th>
+                <th>ФИО</th>
+                <th>Email</th>
+                <th>Телефон</th>
+                <th>Возраст</th>
+                <th>Группа</th>
+                <th>Дата регистрации</th>
+                <th>Записей</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr data-student-id="{{ student.id }}" data-status="{% if student.is_active %}active{% else %}inactive{% endif %}" data-group="{% if student.student_profile and student.student_profile.group %}{{ student.student_profile.group.id }}{% endif %}">
+
+                <td><input type="checkbox" class="select-item" data-id="{{ student.id }}"></td>
+                <td>#{{ student.id }}</td>
+                <td>
+                    <img src="https://ui-avatars.com/api/?name={{ student.first_name }}+{{ student.last_name }}&background=10B981&color=fff&size=40" style="width: 40px; height: 40px; border-radius: 50%;" alt="{{ student.get_full_name }}">
+                </td>
+                <td>
+                    <strong>{{ student.last_name }} {{ student.first_name }}</strong>
+                    <br><small style="color: #64748B;">@{{ student.username }}</small>
+                </td>
+                <td>{{ student.email|default:"—" }}</td>
+                <td>{% if student.student_profile %}{{ student.student_profile.phone|default:"—" }}{% else %}—{% endif %}</td>
+                <td>{% if student.student_profile and student.student_profile.age %}{{ student.student_profile.age }} лет{% else %}—{% endif %}</td>
+                <td>
+                    {% if student.student_profile and student.student_profile.group %}
+                    <span class="badge" style="background: #10B981;">
+                            {{ student.student_profile.group.name }}
+                        </span> {% else %}
+                    <span class="text-muted">Нет группы</span> {% endif %}
+                </td>
+                <td>{{ student.date_joined|date:"d.m.Y" }}</td>
+                <td>
+                    <span class="badge" style="background: #10B981;">{{ student.booking_set.count }}</span>
+                </td>
+                <td>
+                    <span class="status-badge {% if student.is_active %}confirmed{% else %}cancelled{% endif %}">
+                        {% if student.is_active %}Активен{% else %}Неактивен{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="edit-btn" data-id="{{ student.id }}" data-firstname="{{ student.first_name }}" data-lastname="{{ student.last_name }}" data-email="{{ student.email }}" data-username="{{ student.username }}" data-phone="{% if student.student_profile %}{{ student.student_profile.phone }}{% endif %}"
+                            data-age="{% if student.student_profile %}{{ student.student_profile.age }}{% endif %}" data-status="{% if student.is_active %}active{% else %}inactive{% endif %}" data-group="{% if student.student_profile and student.student_profile.group %}{{ student.student_profile.group.id }}{% endif %}"
+                            title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="bookings-btn" data-id="{{ student.id }}" title="Записи">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="12" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-user-graduate" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет учеников</p>
+                    <button id="emptyAddBtn" class="btn-primary" style="margin-top: 15px;">
+                        <i class="fas fa-user-plus"></i> Добавить первого ученика
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Модальное окно добавления/редактирования ученика -->
+<div id="studentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Добавить ученика</h3>
+            <button class="modal-close" onclick="closeStudentModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="studentForm">
+                <input type="hidden" id="studentId" name="student_id">
+
+                <div class="form-group">
+                    <label>Имя пользователя (логин) <span style="color: #EF4444;">*</span></label>
+                    <input type="text" id="username" name="username" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Имя <span style="color: #EF4444;">*</span></label>
+                        <input type="text" id="firstName" name="first_name" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Фамилия <span style="color: #EF4444;">*</span></label>
+                        <input type="text" id="lastName" name="last_name" class="filter-input" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="text" id="phone" name="phone" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;" placeholder="+7 999 123-45-67">
+                </div>
+
+                <!-- НОВОЕ ПОЛЕ: Возраст -->
+                <div class="form-group">
+                    <label>Возраст</label>
+                    <input type="number" id="age" name="age" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;" placeholder="Полных лет" min="1" max="100">
+                </div>
+
+                <!-- Поле выбора группы -->
+                <div class="form-group">
+                    <label>Группа</label>
+                    <select id="studentGroup" name="group" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="">-- Без группы --</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }} ({{ group.age_min }}-{{ group.age_max }} лет)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label>Пароль <span style="color: #EF4444;" id="passwordRequired">*</span></label>
+                    <input type="password" id="password" name="password" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <small style="color: #64748B;" id="passwordHelp">Минимум 8 символов</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select id="status" name="is_active" class="filter-input" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="active">Активен (есть доступ к сайту)</option>
+                        <option value="inactive">Неактивен (нет доступа)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeStudentModal()">Отмена</button>
+            <button class="btn-primary" onclick="saveStudent()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #8B5CF6;
+        color: white;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin: 2px;
+    }
+    
+    .text-muted {
+        color: #94A3B8;
+        font-size: 0.85rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #475569;
+        font-weight: 500;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.5rem;
+        color: #1E293B;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #94A3B8;
+    }
+    
+    .modal-close:hover {
+        color: #EF4444;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+</style>
+{% endblock %}

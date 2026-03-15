@@ -10,6 +10,8 @@
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Comfortaa:wght@300..700&family=Great+Vibes&family=Island+Moments&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <title>rusballett</title>
 </head>
@@ -320,7 +322,10 @@
                     <img src="{% static 'icons/phone.svg' %}" alt="">
                     <p>+7 495 123-45-67 </p>
                 </div>
-                <a href="" class="header_navigation__phone"><img src="{% static 'icons/tg.svg' %}" alt="" class="header_navigation__tg"></a>
+                <a href="{% url 'admin_dashboard' %}" style="margin-right: 20px;">
+                    <i class="fas fa-user-circle" style="font-size: 24px; "></i>
+                </a>
+                <a href="https://t.me/rusballet_kpt_bot" class="header_navigation__phone"><img src="{% static 'icons/tg.svg' %}" alt="" class="header_navigation__tg"></a>
             </div>
 
         </div>

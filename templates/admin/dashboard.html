@@ -1,0 +1,130 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Дашборд | RUSBALLET{% endblock %} {% block page_title %}Дашборд{% endblock %} {% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>Всего учеников</h3>
+            <div class="stat-number">{{ total_students }}</div>
+        </div>
+        <div class="stat-icon">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>Преподавателей</h3>
+            <div class="stat-number">{{ total_teachers }}</div>
+        </div>
+        <div class="stat-icon orange">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>Занятий сегодня</h3>
+            <div class="stat-number">{{ today_schedule }}</div>
+        </div>
+        <div class="stat-icon green">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>Пробных записей</h3>
+            <div class="stat-number">{{ trial_bookings }}</div>
+        </div>
+        <div class="stat-icon purple">
+            <i class="fas fa-clock"></i>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h3>Последние записи</h3>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Родитель</th>
+                <th>Ребенок</th>
+                <th>Группа</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in recent_bookings %}
+            <tr>
+                <td>{{ booking.schedule.date|date:"d.m.Y" }}</td>
+                <td>{{ booking.schedule.start_time|time:"H:i" }}</td>
+                <td>{{ booking.full_name }}</td>
+                <td>{{ booking.child_name }} ({{ booking.child_age }})</td>
+                <td>{{ booking.schedule.group.name }}</td>
+                <td>
+                    <span class="status-badge {{ booking.status }}">
+                        {% if booking.status == 'pending' %}⏳ Ожидает
+                        {% elif booking.status == 'confirmed' %}✅ Подтверждена
+                        {% elif booking.status == 'cancelled' %}❌ Отменена
+                        {% elif booking.status == 'completed' %}✔️ Проведена
+                        {% else %}{{ booking.status }}
+                        {% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 30px;">
+                    <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет записей</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-container" style="margin-top: 30px;">
+    <div class="table-header">
+        <h3>Расписание на сегодня</h3>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Группа</th>
+                <th>Преподаватель</th>
+                <th>Места</th>
+                <th>Тип</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in today_schedules %}
+            <tr>
+                <td>{{ schedule.start_time|time:"H:i" }}</td>
+                <td>{{ schedule.group.name }}</td>
+                <td>{{ schedule.group.teacher.last_name|default:"—" }}</td>
+                <td>{{ schedule.booked_seats }}/{{ schedule.max_seats }}</td>
+                <td>
+                    {% if schedule.is_trial %}
+                    <span class="status-badge pending">Пробное</span> {% else %}
+                    <span class="status-badge confirmed">Обычное</span> {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 30px;">
+                    <i class="fas fa-calendar-times" style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>Нет занятий на сегодня</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

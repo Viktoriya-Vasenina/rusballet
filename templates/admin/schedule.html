@@ -1,0 +1,798 @@
+{% extends 'admin/base_admin.html' %} {% load static %} {% block title %}Расписание | ROSUBLET{% endblock %} {% block page_title %}Расписание занятий{% endblock %} {% block content %}
+<!-- Скрытые данные для JavaScript - ТОЛЬКО ОДИН РАЗ -->
+<script id="groups-data" type="application/json">
+    [{ %
+        for group in groups %
+    } {
+        "id": {
+            {
+                group.id
+            }
+        },
+        "name": "{{ group.name|escapejs }}"
+    } { %
+        if not forloop.last %
+    }, { % endif %
+    } { % endfor %
+    }]
+</script>
+
+<!-- Панель фильтров -->
+<div class="filters-bar" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+    <div style="display: flex; gap: 15px; flex-wrap: wrap; flex: 1;">
+        <select id="groupFilter" class="filter-select" style="padding: 10px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 160px; flex: 1;">
+            <option value="">Все группы</option>
+            {% for group in groups %}
+            <option value="{{ group.id }}">{{ group.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="teacherFilter" class="filter-select" style="padding: 10px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 160px; flex: 1;">
+            <option value="">Все преподаватели</option>
+            {% for teacher in teachers %}
+            <option value="{{ teacher.id }}">{{ teacher.last_name }} {{ teacher.first_name }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="date" id="dateFrom" class="filter-input" style="padding: 10px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 160px; flex: 1;" value="{{ today|date:'Y-m-d' }}">
+
+        <input type="date" id="dateTo" class="filter-input" style="padding: 10px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 160px; flex: 1;" value="{{ next_week|date:'Y-m-d' }}">
+
+        <select id="typeFilter" class="filter-select" style="padding: 10px 15px; border: 1px solid #E2E8F0; border-radius: 8px; min-width: 140px; flex: 0.8;">
+            <option value="">Все типы</option>
+            <option value="trial">Пробные</option>
+            <option value="regular">Обычные</option>
+        </select>
+    </div>
+
+    <button id="applyFilters" class="btn-primary" style="padding: 10px 25px; white-space: nowrap;">
+        <i class="fas fa-search"></i> Применить
+    </button>
+
+    <button id="addScheduleBtn" class="btn-primary" style="padding: 10px 25px; white-space: nowrap;">
+        <i class="fas fa-plus"></i> Добавить занятие
+    </button>
+</div>
+
+<!-- КОНТЕЙНЕР С РАСПИСАНИЕМ -->
+<div class="schedule-container">
+    {% regroup schedules by date as schedules_by_date %} {% for date_group in schedules_by_date %}
+    <!-- БЛОК ДНЯ -->
+    <div class="day-block" style="background: white; border-radius: 16px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- Заголовок дня -->
+        <div style="background: #F8FAFC; padding: 15px 20px; border-bottom: 2px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.3rem; color: #1E293B;">
+                {% with day=date_group.grouper|date:"l" %} {% if day == 'Monday' %}Понедельник {% elif day == 'Tuesday' %}Вторник {% elif day == 'Wednesday' %}Среда {% elif day == 'Thursday' %}Четверг {% elif day == 'Friday' %}Пятница {% elif day == 'Saturday' %}Суббота
+                {% elif day == 'Sunday' %}Воскресенье {% endif %} {% endwith %}, {{ date_group.grouper|date:"d E Y" }}
+            </h2>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-icon edit-day" data-date="{{ date_group.grouper|date:'Y-m-d' }}" title="Редактировать день" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: #3B82F6; font-size: 1.1rem;">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon delete-day" data-date="{{ date_group.grouper|date:'Y-m-d' }}" title="Удалить день" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: #EF4444; font-size: 1.1rem;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ВСЕ ГРУППЫ ЭТОГО ДНЯ -->
+        <div style="padding: 20px;">
+            {% regroup date_group.list by group as groups_in_date %}
+
+            <!-- Сортируем группы в нужном порядке -->
+            {% with sorted_groups=groups_in_date|dictsort:"grouper.id" %} {% for group_group in sorted_groups %}
+            <!-- БЛОК ГРУППЫ -->
+            <div style="background: #F8FAFC; border-radius: 12px; margin-bottom: 20px; padding: 20px;">
+                <!-- Заголовок группы -->
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <h3 style="margin: 0; font-size: 1.2rem; color: #1E293B;">{{ group_group.grouper.name }}</h3>
+                    <span style="background: #8B5CF6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-user" style="font-size: 0.8rem;"></i>
+                            {{ group_group.grouper.teacher.last_name }} {{ group_group.grouper.teacher.first_name }}
+                        </span>
+                    <button class="btn-icon add-group-time" data-date="{{ date_group.grouper|date:'Y-m-d' }}" data-group="{{ group_group.grouper.id }}" style="background: none; border: none; cursor: pointer; padding: 6px; margin-left: auto; color: #10B981; font-size: 1.2rem;">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                </div>
+
+                <!-- ВСЕ ВРЕМЕНА ДЛЯ ЭТОЙ ГРУППЫ -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                    {% for schedule in group_group.list %}
+                    <div class="time-card" data-schedule-id="{{ schedule.id }}" style="background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; {% if not schedule.is_active %}opacity: 0.6; background: #F1F5F9;{% endif %}">
+                        <!-- Время и основная информация -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <span style="font-weight: bold; font-size: 1.2rem; color: #1E293B;">{{ schedule.start_time|time:"H:i" }}</span> {% if schedule.get_free_seats > 3 %}
+                            <span class="seats-badge" style="padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: #D1FAE5; color: #065F46;">
+                                {% elif schedule.get_free_seats > 0 %}
+                                <span class="seats-badge" style="padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: #FEF3C7; color: #92400E;">
+                                {% else %}
+                                <span class="seats-badge" style="padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: #FEE2E2; color: #991B1B;">
+                                {% endif %}
+                                    {{ schedule.booked_seats }}/{{ schedule.max_seats }} мест
+                                </span>
+
+                            <button class="toggle-trial" data-id="{{ schedule.id }}" data-is-trial="{{ schedule.is_trial }}" style="background: none; border: none; cursor: pointer; padding: 2px 0; margin-left: auto;">
+                                    <span style="color: {% if schedule.is_trial %}#8B5CF6{% else %}#64748B{% endif %}; font-size: 0.8rem; font-weight: 500;">
+                                        {% if schedule.is_trial %}🔘 Пробное{% else %}⭕ Обычное{% endif %}
+                                    </span>
+                                </button>
+                        </div>
+
+                        <!-- Действия -->
+                        <div style="display: flex; gap: 5px; justify-content: flex-end; border-top: 1px solid #E2E8F0; padding-top: 10px;">
+                            <button class="btn-icon view-bookings" data-id="{{ schedule.id }}" data-group="{{ group_group.grouper.id }}" title="Записи ({{ schedule.bookings.count }})" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: #3B82F6; font-size: 1rem; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-users"></i>
+                                    <span style="background: #8B5CF6; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;">{{ schedule.bookings.count }}</span>
+                                </button>
+                            <button class="btn-icon delete-time" data-id="{{ schedule.id }}" title="Удалить" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: #EF4444; font-size: 1rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                        </div>
+
+                        <!-- Быстрый просмотр записей -->
+                        {% if schedule.bookings.exists %}
+                        <div class="quick-bookings" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E2E8F0;">
+                            <div style="font-size: 0.8rem; color: #64748B; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-user-check"></i> Записаны:
+                            </div>
+                            {% for booking in schedule.bookings.all|slice:":2" %}
+                            <div style="background: #F1F5F9; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; color: #475569; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>{{ booking.full_name }} ({{ booking.child_name }})</span>
+                                <button class="remove-booking" data-booking="{{ booking.id }}" style="background: none; border: none; color: #EF4444; cursor: pointer; padding: 2px 5px; font-size: 0.9rem;">✕</button>
+                            </div>
+                            {% endfor %} {% if schedule.bookings.count > 2 %}
+                            <div style="font-size: 0.8rem; color: #3B82F6; padding: 4px; text-align: center;">
+                                <button class="view-all-bookings" data-id="{{ schedule.id }}" data-group="{{ group_group.grouper.id }}" style="background: none; border: none; color: #3B82F6; cursor: pointer; font-size: 0.8rem;">
+                                        + ещё {{ schedule.bookings.count|add:"-2" }}
+                                    </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %} {% endwith %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+        <i class="fas fa-calendar-times" style="font-size: 48px; color: #ccc;"></i>
+        <p style="margin: 20px 0; color: #64748B;">Нет занятий в выбранный период</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно добавления занятия -->
+<div id="scheduleModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 id="scheduleModalTitle">Добавить занятие</h3>
+            <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="scheduleForm">
+                <input type="hidden" id="scheduleId">
+
+                <div class="form-group">
+                    <label>Дата занятия</label>
+                    <input type="date" id="scheduleDate" class="filter-input" style="width: 100%; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px;" value="{{ today|date:'Y-m-d' }}">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <button type="button" id="addTimeSlotBtn" style="background: none; border: none; color: #10B981; cursor: pointer; padding: 5px 0; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-plus-circle"></i> Добавить занятие
+                    </button>
+                </div>
+
+                <div id="timeSlotsContainer">
+                    <!-- Сюда будут добавляться слоты времени -->
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeScheduleModal()">Отмена</button>
+            <button class="btn-primary" onclick="saveAllTimes()">Сохранить все</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно просмотра и управления записями -->
+<div id="bookingsModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 id="bookingsModalTitle">Записи на занятие</h3>
+            <button class="modal-close" onclick="closeBookingsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="bookingSearch" class="filter-input" placeholder="Поиск ученика..." style="width: 100%; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px;">
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <h4 style="margin: 0 0 15px 0; color: #1E293B; font-size: 1rem;">Текущие записи:</h4>
+                <div id="currentBookingsList" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Список текущих записей -->
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
+                <h4 style="margin: 0 0 15px 0; color: #1E293B; font-size: 1rem;">Добавить ученика:</h4>
+                <div id="availableStudentsList" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Список доступных учеников -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeBookingsModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentScheduleId = null;
+    let currentGroupId = null;
+    let timeSlotCount = 0;
+
+    // Загружаем группы из скрытого JSON-элемента - ТОЛЬКО ОДИН РАЗ
+    let groupsList = [];
+    try {
+        let groupsElement = document.getElementById('groups-data');
+        if (groupsElement) {
+            groupsList = JSON.parse(groupsElement.textContent);
+            console.log('✅ Группы загружены из JSON:', groupsList);
+        } else {
+            console.error('❌ Элемент groups-data не найден');
+            // Заглушка на случай ошибки
+            groupsList = [{
+                id: 9,
+                name: "Младшая группа"
+            }, {
+                id: 10,
+                name: "Средняя группа"
+            }, {
+                id: 11,
+                name: "Старшая группа"
+            }, {
+                id: 12,
+                name: "Взрослая группа"
+            }];
+        }
+    } catch (e) {
+        console.error('❌ Ошибка парсинга JSON:', e);
+        // Заглушка на случай ошибки
+        groupsList = [{
+            id: 9,
+            name: "Младшая группа"
+        }, {
+            id: 10,
+            name: "Средняя группа"
+        }, {
+            id: 11,
+            name: "Старшая группа"
+        }, {
+            id: 12,
+            name: "Взрослая группа"
+        }];
+    }
+
+    console.log('📊 Количество групп:', groupsList.length);
+
+    $(document).ready(function() {
+        // Кнопка применения фильтров
+        $('#applyFilters').click(function() {
+            let params = new URLSearchParams();
+            if ($('#groupFilter').val()) params.append('group', $('#groupFilter').val());
+            if ($('#teacherFilter').val()) params.append('teacher', $('#teacherFilter').val());
+            if ($('#dateFrom').val()) params.append('date_from', $('#dateFrom').val());
+            if ($('#dateTo').val()) params.append('date_to', $('#dateTo').val());
+            if ($('#typeFilter').val()) {
+                params.append('is_trial', $('#typeFilter').val() === 'trial' ? 'true' : 'false');
+            }
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+
+        // Кнопка добавления занятия
+        $('#addScheduleBtn').click(function() {
+            console.log('🟢 Открытие модального окна добавления');
+            console.log('   groupsList:', groupsList);
+
+            if (!groupsList || groupsList.length === 0) {
+                console.error('❌ Группы не загружены');
+                showNotification('❌ Ошибка: группы не найдены', 'error');
+                return;
+            }
+
+            $('#scheduleModalTitle').text('Добавить занятие');
+            $('#scheduleId').val('');
+            $('#scheduleDate').val(new Date().toISOString().slice(0, 10));
+            $('#timeSlotsContainer').empty();
+            timeSlotCount = 0;
+            addTimeSlot();
+            $('#scheduleModal').addClass('active');
+        });
+
+        // Добавление нового слота времени
+        $('#addTimeSlotBtn').click(function() {
+            addTimeSlot();
+        });
+
+        // Кнопка редактирования дня
+        $('.edit-day').click(function() {
+            let date = $(this).data('date');
+            $('#scheduleModalTitle').text('Редактировать день');
+            $('#scheduleId').val('');
+            $('#scheduleDate').val(date);
+
+            $.ajax({
+                url: '/dashboard/api/schedule/day/' + date + '/',
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    $('#timeSlotsContainer').empty();
+                    timeSlotCount = 0;
+                    if (response.schedules && response.schedules.length > 0) {
+                        response.schedules.forEach(function(schedule) {
+                            addTimeSlot(schedule);
+                        });
+                    } else {
+                        addTimeSlot();
+                    }
+                    $('#scheduleModal').addClass('active');
+                },
+                error: function() {
+                    addTimeSlot();
+                    $('#scheduleModal').addClass('active');
+                }
+            });
+        });
+
+        // Кнопка добавления времени для группы
+        $('.add-group-time').click(function() {
+            let date = $(this).data('date');
+            let groupId = $(this).data('group');
+            $('#scheduleModalTitle').text('Добавить время занятия');
+            $('#scheduleId').val('');
+            $('#scheduleDate').val(date);
+            $('#timeSlotsContainer').empty();
+            timeSlotCount = 0;
+            addTimeSlot(null, groupId);
+            $('#scheduleModal').addClass('active');
+        });
+
+        // Переключение типа занятия
+        $(document).on('click', '.toggle-trial', function() {
+            let scheduleId = $(this).data('id');
+            let isTrial = $(this).data('is-trial');
+
+            $.ajax({
+                url: '/dashboard/api/schedule/toggle-trial/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({
+                    schedule_id: scheduleId,
+                    is_trial: !isTrial
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('✅ Тип занятия изменен', 'success');
+                        location.reload();
+                    } else {
+                        showNotification('❌ ' + response.error, 'error');
+                    }
+                },
+                error: function() {
+                    showNotification('❌ Ошибка соединения', 'error');
+                }
+            });
+        });
+
+        // Просмотр записей
+        $('.view-bookings, .view-all-bookings').click(function() {
+            currentScheduleId = $(this).data('id');
+            currentGroupId = $(this).data('group');
+            loadBookings(currentScheduleId, currentGroupId);
+        });
+
+        // Удаление времени
+        $('.delete-time').click(function() {
+            let scheduleId = $(this).data('id');
+            if (confirm('Удалить это занятие?')) {
+                $.ajax({
+                    url: '/dashboard/api/schedule/delete/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        schedule_id: scheduleId
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ Занятие удалено', 'success');
+                            location.reload();
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+
+        // Удаление дня
+        $('.delete-day').click(function() {
+            let date = $(this).data('date');
+            if (confirm('Удалить все занятия за этот день?')) {
+                $.ajax({
+                    url: '/dashboard/api/schedule/day/delete/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    data: JSON.stringify({
+                        date: date
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            showNotification('✅ День удален', 'success');
+                            location.reload();
+                        } else {
+                            showNotification('❌ ' + response.error, 'error');
+                        }
+                    },
+                    error: function() {
+                        showNotification('❌ Ошибка соединения', 'error');
+                    }
+                });
+            }
+        });
+
+        // Удаление записи
+        $(document).on('click', '.remove-booking', function() {
+            let bookingId = $(this).data('booking');
+            if (confirm('Удалить эту запись?')) {
+                removeBooking(bookingId);
+            }
+        });
+    });
+
+    function addTimeSlot(scheduleData = null, groupId = null) {
+        timeSlotCount++;
+        let slotId = 'slot_' + timeSlotCount;
+
+        console.log('🟢 Добавление слота времени');
+        console.log('   groupsList:', groupsList);
+        console.log('   groupsList длина:', groupsList ? groupsList.length : 0);
+
+        // Проверяем и создаем список групп
+        let availableGroups = groupsList;
+
+        // Если groupsList пустой, используем заглушку с группами
+        if (!availableGroups || availableGroups.length === 0) {
+            console.warn('⚠️ Список групп пуст, используем заглушку');
+            availableGroups = [{
+                id: 9,
+                name: "Младшая группа"
+            }, {
+                id: 10,
+                name: "Средняя группа"
+            }, {
+                id: 11,
+                name: "Старшая группа"
+            }, {
+                id: 12,
+                name: "Взрослая группа"
+            }];
+        }
+
+        // Формируем опции для выпадающего списка групп
+        let groupOptions = '';
+        for (let i = 0; i < availableGroups.length; i++) {
+            let g = availableGroups[i];
+            let selected = (scheduleData && scheduleData.group_id == g.id) || (groupId && groupId == g.id) ? 'selected' : '';
+            groupOptions += `<option value="${g.id}" ${selected}>${g.name}</option>`;
+        }
+
+        console.log('   Создано опций групп:', availableGroups.length);
+
+        let timeValue = scheduleData ? scheduleData.time : '10:00';
+        let isTrialChecked = scheduleData ? scheduleData.is_trial : false;
+        let seatsValue = scheduleData ? scheduleData.max_seats : 10;
+        let scheduleId = scheduleData ? scheduleData.id : '';
+
+        let slotHtml = `
+        <div class="time-slot" id="${slotId}" style="background: #F8FAFC; padding: 15px; border-radius: 8px; margin-bottom: 15px; position: relative;">
+            <button type="button" onclick="removeTimeSlot('${slotId}')" style="position: absolute; top: 5px; right: 5px; background: none; border: none; color: #EF4444; cursor: pointer; font-size: 1rem;">✕</button>
+            <input type="hidden" name="slot_schedule_id" value="${scheduleId}">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-size: 0.85rem;">Группа</label>
+                    <select name="slot_group" class="filter-input" style="width: 100%; padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;" required>
+                        ${groupOptions}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-size: 0.85rem;">Время</label>
+                    <select name="slot_time" class="filter-input" style="width: 100%; padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="10:00" ${timeValue == '10:00' ? 'selected' : ''}>10:00</option>
+                        <option value="11:00" ${timeValue == '11:00' ? 'selected' : ''}>11:00</option>
+                        <option value="12:00" ${timeValue == '12:00' ? 'selected' : ''}>12:00</option>
+                        <option value="13:00" ${timeValue == '13:00' ? 'selected' : ''}>13:00</option>
+                        <option value="14:00" ${timeValue == '14:00' ? 'selected' : ''}>14:00</option>
+                        <option value="15:00" ${timeValue == '15:00' ? 'selected' : ''}>15:00</option>
+                        <option value="16:00" ${timeValue == '16:00' ? 'selected' : ''}>16:00</option>
+                        <option value="17:00" ${timeValue == '17:00' ? 'selected' : ''}>17:00</option>
+                        <option value="18:00" ${timeValue == '18:00' ? 'selected' : ''}>18:00</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-size: 0.85rem;">Тип</label>
+                    <select name="slot_type" class="filter-input" style="width: 100%; padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                        <option value="regular" ${!isTrialChecked ? 'selected' : ''}>Обычное</option>
+                        <option value="trial" ${isTrialChecked ? 'selected' : ''}>Пробное</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; color: #475569; font-size: 0.85rem;">Мест</label>
+                    <input type="number" name="slot_seats" class="filter-input" value="${seatsValue}" min="1" max="50" style="width: 100%; padding: 8px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                </div>
+            </div>
+        </div>
+        `;
+
+        $('#timeSlotsContainer').append(slotHtml);
+        console.log('✅ Слот добавлен, ID:', slotId);
+    }
+
+    function removeTimeSlot(slotId) {
+        $('#' + slotId).remove();
+    }
+
+    function saveAllTimes() {
+        let date = $('#scheduleDate').val();
+        let slots = [];
+
+        $('.time-slot').each(function() {
+            let slot = $(this);
+            slots.push({
+                schedule_id: slot.find('input[name="slot_schedule_id"]').val(),
+                group_id: slot.find('select[name="slot_group"]').val(),
+                time: slot.find('select[name="slot_time"]').val(),
+                is_trial: slot.find('select[name="slot_type"]').val() === 'trial',
+                max_seats: slot.find('input[name="slot_seats"]').val()
+            });
+        });
+
+        $.ajax({
+            url: '/dashboard/api/schedule/batch-save/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            data: JSON.stringify({
+                date: date,
+                slots: slots
+            }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showNotification('✅ Все занятия сохранены', 'success');
+                    closeScheduleModal();
+                    location.reload();
+                } else {
+                    showNotification('❌ ' + response.error, 'error');
+                }
+            },
+            error: function() {
+                showNotification('❌ Ошибка соединения', 'error');
+            }
+        });
+    }
+
+    function loadBookings(scheduleId, groupId) {
+        $('#currentBookingsList').html('<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>');
+        $('#availableStudentsList').html('');
+        $('#bookingsModal').addClass('active');
+
+        $.ajax({
+            url: '/dashboard/api/schedule/' + scheduleId + '/bookings/',
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                displayBookings(response, groupId);
+            },
+            error: function() {
+                $('#currentBookingsList').html('<div style="text-align: center; padding: 10px; color: #EF4444;">Ошибка загрузки</div>');
+            }
+        });
+    }
+
+    function displayBookings(data, groupId) {
+        // Текущие записи
+        let currentHtml = '';
+        if (data.current_bookings && data.current_bookings.length > 0) {
+            data.current_bookings.forEach(function(booking) {
+                currentHtml += `
+                <div class="booking-item" style="background: #F1F5F9; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${booking.full_name}</strong>
+                        <div style="font-size: 0.8rem; color: #64748B; margin-top: 2px;">${booking.child_name || '—'} (${booking.child_age} лет) • ${booking.phone}</div>
+                    </div>
+                    <button class="remove-booking" data-booking="${booking.id}" style="background: none; border: none; color: #EF4444; cursor: pointer; padding: 5px; font-size: 1rem;">✕</button>
+                </div>
+            `;
+            });
+        } else {
+            currentHtml = '<p style="color: #64748B; text-align: center; padding: 10px;">Нет записей</p>';
+        }
+        $('#currentBookingsList').html(currentHtml);
+
+        // Доступные ученики
+        let availableHtml = '';
+        if (data.available_students && data.available_students.length > 0) {
+            data.available_students.forEach(function(student) {
+                let ageText = student.age ? ` • возраст: ${student.age} лет` : '';
+                availableHtml += `
+                <div class="student-item" style="background: white; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${student.full_name}</strong>
+                        <div style="font-size: 0.8rem; color: #64748B; margin-top: 2px;">${student.phone}${ageText}</div>
+                    </div>
+                    <button class="add-booking" 
+                        data-student="${student.id}" 
+                        data-age="${student.age || 0}"
+                        data-phone="${student.phone || ''}"
+                        style="background: #10B981; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">+ Записать</button>
+                </div>
+            `;
+            });
+        } else {
+            availableHtml = '<p style="color: #64748B; text-align: center; padding: 10px;">Нет доступных учеников</p>';
+        }
+        $('#availableStudentsList').html(availableHtml);
+
+        // Обработчики для кнопок
+        $('.add-booking').off('click').on('click', function() {
+            let studentId = $(this).data('student');
+            let studentAge = $(this).data('age') || 0;
+            let studentPhone = $(this).data('phone') || '';
+
+            $.ajax({
+                url: '/dashboard/api/schedule/booking/add/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({
+                    schedule_id: currentScheduleId,
+                    student_id: studentId,
+                    child_age: studentAge,
+                    phone: studentPhone
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('✅ Ученик записан', 'success');
+                        loadBookings(currentScheduleId, currentGroupId);
+                    } else {
+                        showNotification('❌ ' + (response.error || 'Ошибка'), 'error');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Ошибка соединения';
+                    try {
+                        if (xhr.responseText) {
+                            let response = JSON.parse(xhr.responseText);
+                            errorMsg = response.error || errorMsg;
+                        }
+                    } catch (e) {}
+                    showNotification('❌ ' + errorMsg, 'error');
+                }
+            });
+        });
+
+        // Поиск по ученикам
+        $('#bookingSearch').off('keyup').on('keyup', function() {
+            let searchText = $(this).val().toLowerCase();
+            $('.student-item').each(function() {
+                let text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(searchText));
+            });
+        });
+    }
+
+    function removeBooking(bookingId) {
+        console.log('🗑️ Удаление записи:', bookingId);
+
+        $.ajax({
+            url: '/dashboard/api/booking/delete/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            data: JSON.stringify({
+                booking_id: bookingId
+            }),
+            contentType: 'application/json',
+            success: function(response) {
+                console.log('✅ Ответ сервера:', response);
+                if (response.success) {
+                    showNotification('✅ Запись удалена', 'success');
+                    loadBookings(currentScheduleId, currentGroupId);
+                } else {
+                    showNotification('❌ ' + (response.error || 'Ошибка при удалении'), 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Ошибка AJAX:', error);
+                console.error('Статус:', xhr.status);
+                console.error('Ответ сервера:', xhr.responseText);
+
+                let errorMsg = 'Ошибка соединения с сервером';
+                try {
+                    if (xhr.responseText) {
+                        let response = JSON.parse(xhr.responseText);
+                        errorMsg = response.error || errorMsg;
+                    }
+                } catch (e) {
+                    console.error('Не удалось распарсить ответ');
+                }
+                showNotification('❌ ' + errorMsg, 'error');
+            }
+        });
+    }
+
+    function closeScheduleModal() {
+        $('#scheduleModal').removeClass('active');
+    }
+
+    function closeBookingsModal() {
+        $('#bookingsModal').removeClass('active');
+        $('#bookingSearch').val('');
+    }
+
+    function showNotification(message, type) {
+        $('.notification').remove();
+        let notification = $('<div class="notification ' + type + '">' + message + '</div>');
+        $('body').append(notification);
+        notification.fadeIn(300);
+        setTimeout(function() {
+            notification.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            let cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
